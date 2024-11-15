@@ -3,10 +3,11 @@
 # Importing necessary libraries
 import pandas as pd
 import numpy as np
+from dateutil.parser import parse
+from datetime import datetime
 
 
 # Loading and Reading CSV file 
-pd.reset_option('display.max_rows', None)
 transactions = pd.read_csv('inconsistent_transactions.csv') 
 
 
@@ -26,6 +27,29 @@ modified_data['product_id'] = modified_data['product_id'].str.replace(' ','').st
 modified_data['price'] = modified_data['price'].str.replace('$','')
 modified_data['price'] = modified_data['price'].astype(float).round(2)
 
+# Formating the timestamp
+def new_timestamp(row):
+    try:
+        if '-' in row and row.count('-') == 2:
+            try:
+                ts = datetime.strptime(row, '%d-%m-%Y')
+                return ts.strftime('%Y-%m-%d') 
+            except ValueError:
+                pass  
+        
+        ts = parse(row)
+        return ts.strftime('%Y-%m-%d')
+    
+    except ValueError:
+        return row  
+
+modified_data['timestamp'] = modified_data['timestamp'].apply(new_timestamp)
+modified_data = modified_data.sort_values(by='timestamp')
+
+# Reformating the transaction IDs in chronological order
+modified_data['transaction_id'] = ['T{:05d}'.format(i) for i in range(len(modified_data))]
+
+
 
 # Computing for the unit price:
 # Creating a dataframe for rows with complete column values
@@ -38,21 +62,28 @@ unique_products = unique_products.drop(columns=['transaction_id','timestamp'])
 # Computation for unit price
 unique_products['unit_price'] = (unique_products['price'] / unique_products['quantity'])
 
+# Acquiring the highest unit price for each product (We are assuming that huge fluctuations in prices are caused by discounts)
+unique_products['max_unit_price'] = unique_products.groupby('product_id')['unit_price'].transform('max')
+unique_products = unique_products.drop_duplicates(subset='product_id')
+unique_products = unique_products.drop(columns=['transaction_id','quantity','price','timestamp','unit_price'])
+
+# Remove rows in the modified_data data frame that have null values for both price and quantity
+modified_data = modified_data.dropna(subset=['quantity','price'], how='all')
+
 
 # Fill the missing prices and quantities
-final_unique_products = unique_products.drop(columns=['quantity','price'])
-modified_data = modified_data.merge(final_unique_products, on='product_id', how='left')
+modified_data = modified_data.merge(unique_products, on='product_id', how='left')
 
-modified_data['price'] = modified_data['price'].fillna((modified_data['unit_price'] * modified_data['quantity']).round(2))
-modified_data['quantity'] = modified_data['quantity'].fillna((modified_data['price'] / modified_data['unit_price']).apply(np.floor))
+# Computation for missing price values
+modified_data['price'] = modified_data['price'].fillna((modified_data['max_unit_price'] * modified_data['quantity']).round(2))
 
-# Dropping unit_price column to retain original table format
-modified_data = modified_data.drop(columns=['unit_price'])
+# Computation for missing quantity values
+modified_data['quantity'] = modified_data['quantity'].fillna((modified_data['price'] / modified_data['max_unit_price']).apply(np.floor))
+modified_data['quantity'] = modified_data['quantity'].replace(0, 1)
 
-# Removing rows with null values for both quantity and price
-modified_data= modified_data.dropna(subset=['quantity','price'], how='all')
+# Change quantity to int
+modified_data['quantity'] = modified_data['quantity'].astype(int)
+modified_data
 
-
-# Adjusting the date format:
-# Change the / separator to - 
-modified_data['timestamp'] = modified_data['timestamp'].str.replace('/','-')
+# Dropping max_unit_price column to retain original data format
+modified_data = modified_data.drop(columns=['max_unit_price'])
