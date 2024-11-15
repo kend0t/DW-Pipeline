@@ -39,7 +39,7 @@ unique_products = unique_products.drop(columns=['transaction_id','timestamp'])
 unique_products['unit_price'] = (unique_products['price'] / unique_products['quantity'])
 
 
-# Fill the missing unit prices and quantities
+# Fill the missing prices and quantities
 final_unique_products = unique_products.drop(columns=['quantity','price'])
 modified_data = modified_data.merge(final_unique_products, on='product_id', how='left')
 
