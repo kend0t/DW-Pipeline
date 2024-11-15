@@ -49,14 +49,13 @@ modified_data['quantity'] = modified_data['quantity'].fillna((modified_data['pri
 # Dropping unit_price column to retain original table format
 modified_data = modified_data.drop(columns=['unit_price'])
 
-
-# Adjusting the date format:
-# Change the / separator to - 
-modified_data['timestamp'] = modified_data['timestamp'].str.replace('/','-')
-
 # Removing rows with null values for both quantity and price
 tentative_change = modified_data.copy()
 tentative_change = tentative_change.dropna(subset=['quantity','price'], how='all')
 
 # Resetting the transaction IDs to observe proper order
 tentative_change['transaction_id'] = ['T{:05d}'.format(i) for i in range(len(tentative_change))]
+
+# Adjusting the date format:
+# Change the / separator to - 
+modified_data['timestamp'] = modified_data['timestamp'].str.replace('/','-')
