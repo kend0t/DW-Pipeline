@@ -50,8 +50,7 @@ modified_data['quantity'] = modified_data['quantity'].fillna((modified_data['pri
 modified_data = modified_data.drop(columns=['unit_price'])
 
 # Removing rows with null values for both quantity and price
-tentative_change = modified_data.copy()
-tentative_change = tentative_change.dropna(subset=['quantity','price'], how='all')
+modified_data= modified_data.dropna(subset=['quantity','price'], how='all')
 
 
 # Adjusting the date format:
