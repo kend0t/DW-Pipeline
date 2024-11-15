@@ -53,8 +53,6 @@ modified_data = modified_data.drop(columns=['unit_price'])
 tentative_change = modified_data.copy()
 tentative_change = tentative_change.dropna(subset=['quantity','price'], how='all')
 
-# Resetting the transaction IDs to observe proper order
-tentative_change['transaction_id'] = ['T{:05d}'.format(i) for i in range(len(tentative_change))]
 
 # Adjusting the date format:
 # Change the / separator to - 
