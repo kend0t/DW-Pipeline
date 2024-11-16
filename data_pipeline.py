@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from dateutil.parser import parse
 from datetime import datetime
+import sqlite3
 
 
 # Loading and Reading CSV file 
@@ -84,3 +85,38 @@ modified_data
 
 # Dropping max_unit_price column to retain original data format
 modified_data = modified_data.drop(columns=['max_unit_price'])
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Loading into the database
+conn = sqlite3.connect('shopease_sales.db')
+cursor = conn.cursor()
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS sales (
+        transaction_id TEXT PRIMARY KEY,
+        product_id TEXT,
+        quantity REAL,
+        price REAL,
+        timestamp TEXT
+    )
+''')
+conn.commit()
+
+for _, row in modified_data.iterrows():
+    cursor.execute('''
+        INSERT OR REPLACE INTO sales (transaction_id, product_id, quantity, price, timestamp)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (row['transaction_id'], row['product_id'], row['quantity'], row['price'], row['timestamp']))
+conn.commit()
+
+cursor.execute('SELECT * FROM sales LIMIT 5')
+headers = [description[0] for description in cursor.description]
+rows = cursor.fetchall()
+
+print("\t".join(headers))
+
+for row in rows:
+    print("\t".join(str(cell) for cell in row))
+
+conn.close()
