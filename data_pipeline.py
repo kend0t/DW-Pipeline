@@ -44,20 +44,17 @@ def new_timestamp(row):
         return row  
 
 modified_data['timestamp'] = modified_data['timestamp'].apply(new_timestamp)
-modified_data = modified_data.sort_values(by='timestamp')
+
 
 # Reformating the transaction IDs in chronological order
+modified_data = modified_data.sort_values(by='timestamp')
 modified_data['transaction_id'] = ['T{:05d}'.format(i) for i in range(len(modified_data))]
-
 
 
 # Computing for the unit price:
 # Creating a dataframe for rows with complete column values
 complete_transactions = modified_data.dropna()
-
-# Extracting one row for each unique product along with its price and quantity
-unique_products = complete_transactions.drop_duplicates(subset=['product_id'],keep='first')
-unique_products = unique_products.drop(columns=['transaction_id','timestamp'])
+unique_products = complete_transactions.copy()
 
 # Computation for unit price
 unique_products['unit_price'] = (unique_products['price'] / unique_products['quantity'])
