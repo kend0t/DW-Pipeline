@@ -1,3 +1,6 @@
+-- Verify Load
+SELECT * FROM sales;
+
 --check if timestamp is consistent with price
 SELECT strftime('%m', timestamp) AS Month,
     SUM(price) AS total_price
@@ -54,3 +57,23 @@ SELECT transaction_id, COUNT(*) AS count
 FROM sales
 GROUP BY transaction_id
 HAVING COUNT(*) > 1;
+
+-- Another way of checking for null values
+SELECT 
+    SUM(CASE WHEN transaction_id IS NULL THEN 1 ELSE 0 END) AS null_transaction_id,
+    SUM(CASE WHEN product_id IS NULL THEN 1 ELSE 0 END) AS null_product_id,
+    SUM(CASE WHEN quantity IS NULL THEN 1 ELSE 0 END) AS null_quantity,
+    SUM(CASE WHEN price IS NULL THEN 1 ELSE 0 END) AS null_price,
+    SUM(CASE WHEN timestamp IS NULL THEN 1 ELSE 0 END) AS null_timestamp
+FROM sales;
+
+-- Another way of checking for duplicates
+SELECT 
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT(transaction_id || product_id || quantity || price || timestamp)) AS unique_rows,
+    COUNT(*) - COUNT(DISTINCT(transaction_id || product_id || quantity || price || timestamp)) AS duplicate_count
+FROM sales;
+
+
+
+
