@@ -74,6 +74,9 @@ SELECT
     COUNT(*) - COUNT(DISTINCT(transaction_id || product_id || quantity || price || timestamp)) AS duplicate_count
 FROM sales;
 
-
+-- Test if price or quantity has value less than 1
+SELECT transaction_id, price, quantity
+FROM sales
+WHERE price < 0 OR quantity < 0;
 
 
